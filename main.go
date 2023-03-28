@@ -2,6 +2,8 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -21,6 +23,7 @@ var count int64
 var lock sync.RWMutex
 
 func main() {
+	flag.Parse()
 	splits := strings.Split(*tokens, ",")
 	var tokens []string
 	for _, value := range splits {
@@ -36,10 +39,12 @@ func main() {
 	proxy := &httputil.ReverseProxy{
 		Director: func(req *http.Request) {
 			lock.RLock()
-			token := tokens[count%int64(len(tokens))]
+			var token string
+			if len(tokens) > 0 {
+				token = tokens[count%int64(len(tokens))]
+			}
 			lock.RUnlock()
 			atomic.AddInt64(&count, 1)
-
 			req.URL.Scheme = url.Scheme
 			req.URL.Host = url.Host
 			req.Host = url.Host
@@ -63,6 +68,7 @@ func main() {
 						} else {
 							tokens = append(tokens[:i], tokens[i+1:]...)
 						}
+						log.Println("ChatGPT API token " + token + " invalid and has been evicted")
 						break
 					}
 				}
@@ -74,10 +80,14 @@ func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if *auth != "" && *auth != r.Header.Get("Authorization") {
 			w.WriteHeader(401)
+			fmt.Fprint(w, "No Authorization header for proxy server!")
 			return
 		}
 		proxy.ServeHTTP(w, r)
 	})
+
+	log.Println("Listen on port:" + *port)
+	log.Println("Running...")
 
 	err = http.ListenAndServe(":"+*port, nil)
 	if err != nil {
