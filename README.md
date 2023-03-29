@@ -1,6 +1,6 @@
 # ChatGPT-API-Proxy
 ![GitHub](https://img.shields.io/github/license/Heng-Bian/ChatGPT-API-Proxy)
-![GitHub](https://img.shields.io/badge/build-pass-green)
+![GitHub](https://img.shields.io/badge/build-pass-green)  
 A reverse proxy of https://api.openai.com that supports token load-balance and avoids token leakage
 
 openai api reference
