@@ -1,37 +1,33 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
 )
 
 var (
-	port   = flag.String("port", "8080", "port to listen on")
-	auth   = flag.String("auth", "", "Authorization Header of reverse proxy")
-	target = flag.String("target", "https://api.openai.com", "ChatGPT API address")
-	tokens = flag.String("tokens", "", "comma separated ChatGPT API tokens")
+	port       = flag.String("port", "8080", "Port to listen on")
+	auth       = flag.String("auth", "", "Authorization Header of reverse proxy")
+	target     = flag.String("target", "https://api.openai.com", "ChatGPT API address")
+	tokenstr   = flag.String("tokens", "", "Comma separated ChatGPT API tokens")
+	configFile = flag.String("config", "", "The config file path. Config file is prior than commad line")
 )
 
 var count int64
 var lock sync.RWMutex
+var tokens []string
 
 func main() {
-	flag.Parse()
-	splits := strings.Split(*tokens, ",")
-	var tokens []string
-	for _, value := range splits {
-		value := strings.Trim(value, " ")
-		if len(value) > 0 {
-			tokens = append(tokens, value)
-		}
-	}
+	loadConfig()
 	url, err := url.Parse(*target)
 	if err != nil {
 		panic(err)
@@ -92,5 +88,53 @@ func main() {
 	err = http.ListenAndServe(":"+*port, nil)
 	if err != nil {
 		panic(err)
+	}
+}
+
+func loadConfig() {
+	flag.Parse()
+	splits := strings.Split(*tokenstr, ",")
+	for _, value := range splits {
+		value := strings.Trim(value, " ")
+		if len(value) > 0 {
+			tokens = append(tokens, value)
+		}
+	}
+	if *configFile != "" {
+		file, err := os.Open(*configFile)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		configMap := map[string]interface{}{}
+		err = json.NewDecoder(file).Decode(&configMap)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		if po := configMap["port"]; po != nil {
+			poValue, ok := po.(string)
+			if ok {
+				port = &poValue
+			} else {
+				log.Fatalln("port in config.json must be string")
+			}
+		}
+		if au := configMap["auth"]; au != nil {
+			auValue, ok := au.(string)
+			if ok {
+				auth = &auValue
+			}
+		}
+		if ta := configMap["target"]; ta != nil {
+			taValue, ok := ta.(string)
+			if ok {
+				target = &taValue
+			}
+		}
+		if to := configMap["tokens"]; to != nil {
+			toValue, ok := to.([]string)
+			if ok {
+				tokens = toValue
+			}
+		}
 	}
 }

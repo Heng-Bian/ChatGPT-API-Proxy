@@ -3,12 +3,15 @@
 ![GitHub](https://img.shields.io/badge/build-pass-green)  
 A reverse proxy of https://api.openai.com that supports token load-balance and avoids token leakage
 
+According to openai, `Do not share your API key with others, or expose it in the browser or other client-side code.`
+Reverse proxy of openai keeps your token secret by offering another authentication.
+
 openai api reference
 `https://platform.openai.com/docs/api-reference`
 ## Feature
 
 - simple, clean but efficent code
-- providing an authorization without openai token leakage
+- providing an authentication without openai token leakage
 - supproting token load-balance
 - avoiding the limitation of single openai token
 - removing invalid token automatically

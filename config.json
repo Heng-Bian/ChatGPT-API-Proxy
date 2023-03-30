@@ -1,0 +1,10 @@
+{
+    "port": "8080",
+    "auth": "YOUR_AUTHORIZATION",
+    "target": "https://api.openai.com",
+    "tokens": [
+        "YOUR_OPENAI_TOKEN_1",
+        "YOUR_OPENAI_TOKEN_2",
+        "YOUR_OPENAI_TOKEN_3"
+    ]
+}
