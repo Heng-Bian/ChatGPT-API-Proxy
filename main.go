@@ -84,10 +84,9 @@ func main() {
 
 	log.Println("Listen on port:" + *port)
 	log.Println("Running...")
-
 	err = http.ListenAndServe(":"+*port, nil)
 	if err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
 }
 
@@ -131,9 +130,14 @@ func loadConfig() {
 			}
 		}
 		if to := configMap["tokens"]; to != nil {
-			toValue, ok := to.([]string)
+			toValue, ok := to.([]interface{})
 			if ok {
-				tokens = toValue
+				for _, k := range toValue {
+					t, ok := k.(string)
+					if ok {
+						tokens = append(tokens, t)
+					}
+				}
 			}
 		}
 	}
