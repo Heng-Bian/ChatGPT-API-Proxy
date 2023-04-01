@@ -25,6 +25,10 @@ Start reverse proxy on port 8080 with your openai tokens
 ```
 ./ChatGPT-API-Proxy -prot 8080 -auth YOUR_AUTHORIZATION -tokens YOUR_OPENAI_TOKEN_1,YOUR_OPENAI_TOKEN_2
 ```
+Start reverse proxy with config file
+```
+./ChatGPT-API-Proxy -config config.json
+```
 Use by cURL
 ```
 curl --location 'http://localhost:8080/v1/chat/completions' \
