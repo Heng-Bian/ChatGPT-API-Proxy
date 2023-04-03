@@ -49,9 +49,11 @@ func main() {
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if *auth != "" && *auth != r.Header.Get("Authorization") {
-			w.WriteHeader(401)
-			fmt.Fprint(w, "No Authorization header for proxy server!")
-			return
+			if !strings.HasPrefix(r.Header.Get("Authorization"), "Bearer sk-") {
+				w.WriteHeader(401)
+				fmt.Fprint(w, "No Authorization header for proxy server!")
+				return
+			}
 		}
 		proxy.ServeHTTP(w, r)
 	})
@@ -75,9 +77,12 @@ func director(req *http.Request) {
 	req.URL.Scheme = scheme
 	req.URL.Host = host
 	req.Host = host
-	req.Header.Del("Authorization")
-	if token != "" {
-		req.Header.Add("Authorization", "Bearer "+token)
+	//pass througn
+	if !strings.HasPrefix(req.Header.Get("Authorization"), "Bearer sk-") {
+		req.Header.Del("Authorization")
+		if token != "" {
+			req.Header.Add("Authorization", "Bearer "+token)
+		}
 	}
 }
 
