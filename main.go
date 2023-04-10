@@ -48,6 +48,14 @@ func main() {
 	}
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		//CORS
+		if r.Method == http.MethodOptions {
+			w.Header().Add("Access-Control-Allow-Methods", "DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT")
+			w.Header().Add("Access-Control-Allow-Origin", "*")
+			w.WriteHeader(200)
+			return
+		}
+		//authorize
 		if *auth != "" && *auth != r.Header.Get("Authorization") {
 			if !strings.HasPrefix(r.Header.Get("Authorization"), "Bearer sk-") {
 				w.WriteHeader(401)
