@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -75,7 +77,6 @@ func main() {
 }
 
 func director(req *http.Request) {
-	log.Printf("incoming:%v\n", req.Header)
 	lock.RLock()
 	var token string
 	if len(tokens) > 0 {
@@ -96,20 +97,42 @@ func director(req *http.Request) {
 }
 
 func modifyResponse(r *http.Response) error {
-	log.Printf("target request:%v\n", r.Request.Header)
-	if r.StatusCode != 401 {
-		return nil
+	evict := func(r *http.Response) {
+		//evict the invalid token
+		au := r.Request.Header.Get("Authorization")
+		if !strings.HasPrefix(au, "Bearer ") {
+			return
+		}
+		token := strings.Split(au, " ")[1]
+		lock.Lock()
+		defer lock.Unlock()
+		tokens = findAndRemove(tokens, token)
+		log.Println("ChatGPT API token " + token + " invalid and has been evicted")
 	}
-	//evict the invalid token
-	au := r.Request.Header.Get("Authorization")
-	if !strings.HasPrefix(au, "Bearer ") {
-		return nil
+
+	message429 := struct {
+		Error struct {
+			Message string      `json:"message"`
+			Type    string      `json:"type"`
+			Param   interface{} `json:"param"`
+			Code    interface{} `json:"code"`
+		} `json:"error"`
+	}{}
+
+	if r.StatusCode == http.StatusUnauthorized {
+		evict(r)
 	}
-	token := strings.Split(au, " ")[1]
-	lock.Lock()
-	defer lock.Unlock()
-	tokens = findAndRemove(tokens, token)
-	log.Println("ChatGPT API token " + token + " invalid and has been evicted")
+	if r.StatusCode == http.StatusTooManyRequests {
+		data, err := io.ReadAll(r.Body)
+		if err == nil {
+			r.Body.Close()
+			r.Body = io.NopCloser(bytes.NewReader(data))
+			json.Unmarshal(data, &message429)
+			if message429.Error.Type == "insufficient_quota" {
+				evict(r)
+			}
+		}
+	}
 	return nil
 }
 
