@@ -75,7 +75,6 @@ func main() {
 }
 
 func director(req *http.Request) {
-	log.Printf("incoming:%v\n", req.Header)
 	lock.RLock()
 	var token string
 	if len(tokens) > 0 {
@@ -96,7 +95,6 @@ func director(req *http.Request) {
 }
 
 func modifyResponse(r *http.Response) error {
-	log.Printf("target request:%v\n", r.Request.Header)
 	if r.StatusCode != 401 {
 		return nil
 	}
