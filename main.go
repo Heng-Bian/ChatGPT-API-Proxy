@@ -95,7 +95,7 @@ func director(req *http.Request) {
 }
 
 func modifyResponse(r *http.Response) error {
-	if r.StatusCode != 401 && r.StatusCode != 429 {
+	if r.StatusCode != 401 {
 		return nil
 	}
 	//evict the invalid token
