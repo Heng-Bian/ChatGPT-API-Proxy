@@ -128,7 +128,7 @@ func modifyResponse(r *http.Response) error {
 			r.Body.Close()
 			r.Body = io.NopCloser(bytes.NewReader(data))
 			json.Unmarshal(data, &message429)
-			if message429.Error.Message == "insufficient_quota" {
+			if message429.Error.Type == "insufficient_quota" {
 				evict(r)
 			}
 		}
