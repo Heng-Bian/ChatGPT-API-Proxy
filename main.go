@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -124,6 +125,8 @@ func modifyResponse(r *http.Response) error {
 	if r.StatusCode == http.StatusTooManyRequests {
 		data, err := io.ReadAll(r.Body)
 		if err == nil {
+			r.Body.Close()
+			r.Body = io.NopCloser(bytes.NewReader(data))
 			json.Unmarshal(data, &message429)
 			if message429.Error.Message == "insufficient_quota" {
 				evict(r)
