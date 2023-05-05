@@ -123,7 +123,7 @@ func modifyResponse(r *http.Response) error {
 	}
 	if r.StatusCode == http.StatusTooManyRequests {
 		data, err := io.ReadAll(r.Body)
-		if err != nil {
+		if err == nil {
 			json.Unmarshal(data, &message429)
 			if message429.Error.Message == "insufficient_quota" {
 				evict(r)
